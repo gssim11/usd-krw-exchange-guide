@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>카카오페이증권 달러 환전 → 토스 이체 가이드</title>
+  <style>
+    :root {
+      --kakao-yellow: #FEE500;
+      --kakao-dark: #191919;
+      --toss-blue: #0064FF;
+      --toss-blue-dark: #0050CC;
+      --toss-bg: #E8F3FF;
+      --green: #00A86B;
+      --green-bg: #E6F8F0;
+      --orange: #E67700;
+      --orange-bg: #FFF3E0;
+      --red: #E03131;
+      --red-bg: #FFE8E8;
+      --bg-main: #EAEFF5;
+      --card-bg: #FFFFFF;
+      --text-primary: #111827;
+      --text-secondary: #374151;
+      --text-muted: #6B7280;
+      --border-color: #D1D5DB;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      line-height: 1.65;
+      padding: 24px 16px 80px;
+    }
+
+    .wrapper {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* 상단 헤더 */
+    .hero {
+      background: #191F28;
+      color: #FFFFFF;
+      border-radius: 20px;
+      padding: 24px 26px;
+      margin-bottom: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .badge-yellow {
+      background-color: var(--kakao-yellow);
+      color: var(--kakao-dark);
+      font-weight: 800;
+      font-size: 0.82rem;
+      padding: 5px 12px;
+      border-radius: 999px;
+    }
+
+    .view-mode-btn {
+      background: rgba(255, 255, 255, 0.12);
+      color: #FFFFFF;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .view-mode-btn:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .hero h1 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .hero p {
+      font-size: 0.95rem;
+      color: #D1D5DB;
+    }
+
+    /* 실시간 환전 시간 상태바 */
+    .time-bar {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+
+    .time-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .time-desc {
+      font-size: 1.02rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .time-badge {
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.86rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .badge-good { background: var(--green-bg); color: var(--green); }
+    .badge-warn { background: var(--orange-bg); color: var(--orange); }
+    .badge-stop { background: var(--red-bg); color: var(--red); }
+
+    /* 상단 스텝 네비게이터 탭 (클릭 시 바로 이동) */
+    .stepper {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .step-tab {
+      background: var(--card-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 14px;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .step-tab:hover {
+      border-color: var(--toss-blue);
+    }
+
+    .step-tab.active {
+      border-color: var(--toss-blue);
+      background: var(--toss-bg);
+      box-shadow: 0 4px 12px rgba(0, 100, 255, 0.15);
+    }
+
+    .step-tab.done {
+      border-color: var(--green);
+      background: var(--green-bg);
+    }
+
+    .tab-num {
+      display: block;
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+    }
+
+    .step-tab.active .tab-num { color: var(--toss-blue); }
+    .step-tab.done .tab-num { color: var(--green); }
+
+    .tab-title {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      word-break: keep-all;
+    }
+
+    /* 스텝 본문 카드 */
+    .step-panel {
+      display: none;
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 26px 24px;
+      border: 2px solid var(--toss-blue);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      margin-bottom: 18px;
+    }
+
+    .step-panel.show {
+      display: block;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .panel-step-badge {
+      background: var(--toss-blue);
+      color: #FFFFFF;
+      font-weight: 800;
+      font-size: 0.82rem;
+      padding: 4px 12px;
+      border-radius: 8px;
+    }
+
+    .panel-status {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--toss-blue);
+    }
+
+    .panel-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .panel-sub {
+      font-size: 0.94rem;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    /* 앱 내 이동 경로 박스 (고대비) */
+    .path-box {
+      background: #F8FAFC;
+      border: 1.5px solid #CBD5E1;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+    }
+
+    .path-label {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .path-flow {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .node {
+      background: #FFFFFF;
+      border: 1.5px solid #94A3B8;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .node.kakao {
+      background: var(--kakao-yellow);
+      border-color: #D4BE00;
+      color: var(--kakao-dark);
+    }
+
+    .node.toss {
+      background: var(--toss-blue);
+      border-color: var(--toss-blue-dark);
+      color: #FFFFFF;
+    }
+
+    .arrow {
+      font-weight: 900;
+      color: #64748B;
+      font-size: 1rem;
+    }
+
+    /* 행동 체크리스트 (취소선 제거 -> 명확한 카드 하이라이트) */
+    .checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .check-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px;
+      border-radius: 14px;
+      border: 2px solid #E2E8F0;
+      background: #FFFFFF;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .check-card:hover {
+      border-color: #94A3B8;
+      background: #F8FAFC;
+    }
+
+    .check-card.checked {
+      border-color: var(--green);
+      background: var(--green-bg);
+    }
+
+    .check-card input[type="checkbox"] {
+      width: 22px;
+      height: 22px;
+      margin-top: 2px;
+      accent-color: var(--green);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .check-content {
+      flex: 1;
+    }
+
+    .check-num {
+      display: inline-block;
+      font-size: 0.76rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: #E2E8F0;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .check-card.checked .check-num {
+      background: var(--green);
+      color: #FFFFFF;
+    }
+
+    .check-text {
+      font-size: 1.02rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      word-break: keep-all;
+    }
+
+    .check-text strong {
+      font-weight: 800;
+      color: #000000;
+      background: rgba(254, 229, 0, 0.45);
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    /* 안내 및 주의사항 박스 */
+    .alert-box {
+      border-radius: 12px;
+      padding: 15px 16px;
+      margin-bottom: 20px;
+      font-size: 0.94rem;
+      font-weight: 600;
+    }
+
+    .alert-info {
+      background: var(--toss-bg);
+      border-left: 5px solid var(--toss-blue);
+      color: #1E3A8A;
+    }
+
+    .alert-warn {
+      background: var(--orange-bg);
+      border-left: 5px solid var(--orange);
+      color: #7C2D12;
+    }
+
+    /* 간이 환전 계산기 */
+    .calc-card {
+      background: #F8FAFC;
+      border: 1.5px solid #CBD5E1;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 22px;
+    }
+
+    .calc-head {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .calc-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .input-wrap label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .input-wrap input {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 1rem;
+      font-weight: 800;
+      border: 1.5px solid #94A3B8;
+      border-radius: 8px;
+    }
+
+    .calc-output {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 1px solid #CBD5E1;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .calc-output strong {
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: var(--toss-blue);
+    }
+
+    /* 하단 이전/다음 스텝 이동 버튼 영역 */
+    .nav-btns {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 15px 18px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+
+    .btn-prev {
+      background: #E2E8F0;
+      color: var(--text-secondary);
+      flex: 0.45;
+    }
+
+    .btn-prev:hover {
+      background: #CBD5E1;
+    }
+
+    .btn-next {
+      background: var(--toss-blue);
+      color: #FFFFFF;
+    }
+
+    .btn-next:hover {
+      background: var(--toss-blue-dark);
+    }
+
+    .btn-finish {
+      background: var(--green);
+      color: #FFFFFF;
+    }
+
+    @media (max-width: 520px) {
+      .stepper { grid-template-columns: repeat(2, 1fr); }
+      .calc-row { grid-template-columns: 1fr; }
+      .time-bar { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+
+  <script>
+    let currentStep = 2; // 1단계는 이미 확인 완료했으므로 2단계부터 바로 시작
+    let showAllMode = false;
+
+    function goToStep(stepNum) {
+      currentStep = stepNum;
+      showAllMode = false;
+      document.getElementById('viewModeBtn').textContent = '전체 단계 한눈에 보기';
+      renderView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleAllView() {
+      showAllMode = !showAllMode;
+      const btn = document.getElementById('viewModeBtn');
+      btn.textContent = showAllMode ? '단계별 집중 모드로 보기' : '전체 단계 한눈에 보기';
+      renderView();
+    }
+
+    function completeAndNext(stepNum) {
+      const panel = document.getElementById('panel' + stepNum);
+      const cbs = panel.querySelectorAll('input[type="checkbox"]');
+      cbs.forEach(cb => {
+        cb.checked = true;
+        cb.closest('.check-card').classList.add('checked');
+      });
+      updateTabStatus();
+
+      if (stepNum < 4) {
+        goToStep(stepNum + 1);
+      } else {
+        alert('축하합니다! 카카오페이증권 달러 환전 및 토스 계좌 이체 전 과정을 완료하셨습니다.');
+      }
+    }
+
+    function onCardClick(cardEl, event) {
+      if (event.target.tagName !== 'INPUT') {
+        const cb = cardEl.querySelector('input[type="checkbox"]');
+        cb.checked = !cb.checked;
+      }
+      const cb = cardEl.querySelector('input[type="checkbox"]');
+      if (cb.checked) {
+        cardEl.classList.add('checked');
+      } else {
+        cardEl.classList.remove('checked');
+      }
+      updateTabStatus();
+    }
+
+    function updateTabStatus() {
+      for (let i = 1; i <= 4; i++) {
+        const panel = document.getElementById('panel' + i);
+        const tab = document.getElementById('tab' + i);
+        const cbs = panel.querySelectorAll('input[type="checkbox"]');
+        const allChecked = Array.from(cbs).every(cb => cb.checked);
+        const numSpan = tab.querySelector('.tab-num');
+
+        if (allChecked) {
+          tab.classList.add('done');
+          numSpan.textContent = 'STEP ' + i + ' ✓';
+        } else {
+          tab.classList.remove('done');
+          numSpan.textContent = 'STEP ' + i;
+        }
+      }
+    }
+
+    function renderView() {
+      for (let i = 1; i <= 4; i++) {
+        const panel = document.getElementById('panel' + i);
+        const tab = document.getElementById('tab' + i);
+
+        if (showAllMode) {
+          panel.classList.add('show');
+          tab.classList.remove('active');
+        } else {
+          if (i === currentStep) {
+            panel.classList.add('show');
+            tab.classList.add('active');
+          } else {
+            panel.classList.remove('show');
+            tab.classList.remove('active');
+          }
+        }
+      }
+      updateTabStatus();
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const day = now.getDay();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const totalMins = hours * 60 + minutes;
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+
+      const timeLabel = document.getElementById('timeLabel');
+      const timeDesc = document.getElementById('timeDesc');
+      const timeBadge = document.getElementById('timeBadge');
+
+      timeLabel.textContent = `현재 시각: ${now.getMonth() + 1}월 ${now.getDate()}일(${days[day]}) ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+      // 카카오페이증권 공지(2026.03.13 적용): 24시간 환전 가능, 95% 우대는 영업일 09:00~16:00
+      // 공휴일은 판별하지 않음
+      const isPreferential = (day >= 1 && day <= 5) && (totalMins >= 540 && totalMins < 960);
+
+      if (isPreferential) {
+        timeDesc.textContent = '지금 환전하면 95% 우대 적용 (영업일 09:00~16:00)';
+        timeBadge.textContent = '우대 시간';
+        timeBadge.className = 'time-badge badge-good';
+      } else {
+        timeDesc.textContent = '우대 미적용 시간 · 영업일 09:00~16:00까지 기다리면 수수료 절약';
+        timeBadge.textContent = '우대 없음 (대기 권장)';
+        timeBadge.className = 'time-badge badge-warn';
+      }
+    }
+
+    function calculateKRW() {
+      const usd = parseFloat(document.getElementById('usdInput').value) || 0;
+      const rate = parseFloat(document.getElementById('rateInput').value) || 0;
+      // 달러→원화: 매매기준율에서 스프레드를 뺀 환율 적용 (기본 1%, 95% 우대 시 0.05%)
+      const pref = Math.floor(usd * rate * (1 - 0.0005));
+      const base = Math.floor(usd * rate * (1 - 0.01));
+      document.getElementById('krwOutput').textContent = pref.toLocaleString('ko-KR') + ' 원';
+      document.getElementById('krwBaseOutput').textContent = base.toLocaleString('ko-KR') + ' 원';
+      document.getElementById('krwDiff').textContent = (pref - base).toLocaleString('ko-KR') + ' 원';
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updateClock();
+      setInterval(updateClock, 20000);
+      calculateKRW();
+      renderView();
+    });
+  </script>
+</head>
+<body>
+
+<div class="wrapper">
+  <!-- 상단 헤더 -->
+  <div class="hero">
+    <div class="hero-top">
+      <span class="badge-yellow">1단계 확인 완료 · 2단계부터 시작</span>
+      <button class="view-mode-btn" id="viewModeBtn" onclick="toggleAllView()">전체 단계 한눈에 보기</button>
+    </div>
+    <h1>카카오페이증권 달러 환전 → 토스 이체</h1>
+    <p>각 항목을 눌러 체크한 뒤 하단의 [다음 단계로 이동] 버튼을 누르세요.</p>
+  </div>
+
+  <!-- 현재 시간 상태바 -->
+  <div class="time-bar">
+    <div>
+      <div class="time-label" id="timeLabel">현재 시각 불러오는 중...</div>
+      <div class="time-desc" id="timeDesc">환전 가능 시간대 자동 판별 중</div>
+    </div>
+    <span class="time-badge badge-good" id="timeBadge">실시간 판별</span>
+  </div>
+
+  <!-- 상단 4단계 탭 네비게이션 -->
+  <div class="stepper">
+    <div class="step-tab done" id="tab1" onclick="goToStep(1)">
+      <span class="tab-num">STEP 1 ✓</span>
+      <div class="tab-title">달러 잔고 확인</div>
+    </div>
+    <div class="step-tab active" id="tab2" onclick="goToStep(2)">
+      <span class="tab-num">STEP 2</span>
+      <div class="tab-title">달러 → 원화 환전</div>
+    </div>
+    <div class="step-tab" id="tab3" onclick="goToStep(3)">
+      <span class="tab-num">STEP 3</span>
+      <div class="tab-title">원화 입금 확인</div>
+    </div>
+    <div class="step-tab" id="tab4" onclick="goToStep(4)">
+      <span class="tab-num">STEP 4</span>
+      <div class="tab-title">토스 계좌 송금</div>
+    </div>
+  </div>
+
+  <!-- ================= STEP 1 ================= -->
+  <div class="step-panel" id="panel1">
+    <div class="panel-header">
+      <span class="panel-step-badge">STEP 1</span>
+      <span class="panel-status">사전 확인 완료됨</span>
+    </div>
+    <div class="panel-title">출금 가능 달러(결제 완료분) 확인</div>
+    <div class="panel-sub">미국 주식 매도 대금은 결제일이 지나야 출금·환전 가능 금액으로 잡힙니다. 화면의 '출금 가능' 금액이 기준입니다.</div>
+
+    <div class="path-box">
+      <div class="path-label">카카오페이 앱 이동 경로</div>
+      <div class="path-flow">
+        <span class="node">카카오페이 앱</span>
+        <span class="arrow">→</span>
+        <span class="node">증권 (증권홈)</span>
+        <span class="arrow">→</span>
+        <span class="node">내 계좌</span>
+        <span class="arrow">→</span>
+        <span class="node">출금</span>
+        <span class="arrow">→</span>
+        <span class="node kakao">달러</span>
+      </div>
+    </div>
+
+    <div class="checklist">
+      <div class="check-card checked" onclick="onCardClick(this, event)">
+        <input type="checkbox" checked>
+        <div class="check-content">
+          <span class="check-num">확인 완료</span>
+          <div class="check-text">화면에 표시된 총 달러 잔고와 <strong>환전(출금) 가능 달러</strong> 금액이 일치하는지 확인 완료했습니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-next" onclick="goToStep(2)">2단계(달러 → 원화 환전)로 이동 →</button>
+    </div>
+  </div>
+
+  <!-- ================= STEP 2 ================= -->
+  <div class="step-panel show" id="panel2">
+    <div class="panel-header">
+      <span class="panel-step-badge">STEP 2</span>
+      <span class="panel-status">현재 진행할 순서</span>
+    </div>
+    <div class="panel-title">우대 시간에 달러 → 원화 환전</div>
+    <div class="panel-sub">환전은 24시간 가능하지만 <strong>95% 환율 우대는 영업일 09:00 ~ 16:00</strong>에만 적용됩니다. 그 밖의 시간·주말·공휴일에는 기본 스프레드 1%가 그대로 붙습니다.</div>
+
+    <div class="path-box">
+      <div class="path-label">카카오페이 앱 이동 경로</div>
+      <div class="path-flow">
+        <span class="node">증권홈</span>
+        <span class="arrow">→</span>
+        <span class="node">내 계좌</span>
+        <span class="arrow">→</span>
+        <span class="node kakao">환전</span>
+        <span class="arrow">→</span>
+        <span class="node kakao">달러(USD) → 원화(KRW)</span>
+      </div>
+    </div>
+
+    <div class="checklist">
+      <div class="check-card" onclick="onCardClick(this, event)">
+        <input type="checkbox">
+        <div class="check-content">
+          <span class="check-num">순서 1</span>
+          <div class="check-text">카카오페이 증권 <strong>[내 계좌] → [환전]</strong> 메뉴를 터치합니다.</div>
+        </div>
+      </div>
+
+      <div class="check-card" onclick="onCardClick(this, event)">
+        <input type="checkbox">
+        <div class="check-content">
+          <span class="check-num">순서 2</span>
+          <div class="check-text">상단 환전 방향이 <strong>[달러 USD] → [원화 KRW]</strong>로 되어 있는지 확인합니다. (반대라면 가운데 화살표 아이콘 터치)</div>
+        </div>
+      </div>
+
+      <div class="check-card" onclick="onCardClick(this, event)">
+        <input type="checkbox">
+        <div class="check-content">
+          <span class="check-num">순서 3 · 핵심 팁</span>
+          <div class="check-text">금액을 직접 치기보다 <strong>[전액] 버튼이나 '환전 가능 금액' 표시</strong>를 눌러 입력하세요. 센트 단위 자투리까지 빠짐없이 들어갑니다. 입력된 금액이 1단계에서 본 출금 가능 달러와 같은지 확인합니다.</div>
+        </div>
+      </div>
+
+      <div class="check-card" onclick="onCardClick(this, event)">
+        <input type="checkbox">
+        <div class="check-content">
+          <span class="check-num">순서 4</span>
+          <div class="check-text">적용 환율에 우대가 표시되는지, 예상 원화 금액이 맞는지 확인한 뒤 하단 <strong>[환전하기]</strong> 버튼을 눌러 완료합니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 간이 계산기 -->
+    <div class="calc-card">
+      <div class="calc-head">참고용: 환전 예상 수령액 계산기 (기준 환율 = 매매기준율)</div>
+      <div class="calc-row">
+        <div class="input-wrap">
+          <label>환전할 달러 (USD)</label>
+          <input type="number" id="usdInput" placeholder="예: 500.25" step="0.01" oninput="calculateKRW()">
+        </div>
+        <div class="input-wrap">
+          <label>현재 기준 환율 (원)</label>
+          <input type="number" id="rateInput" value="1380" step="1" oninput="calculateKRW()">
+        </div>
+      </div>
+      <div class="calc-output">
+        <span>우대 시간(09:00~16:00) 환전</span>
+        <strong id="krwOutput">0 원</strong>
+      </div>
+      <div class="calc-output">
+        <span>우대 없는 시간 환전</span>
+        <span id="krwBaseOutput">0 원</span>
+      </div>
+      <div class="calc-output">
+        <span>우대 시간에 하면 더 받는 금액</span>
+        <span id="krwDiff">0 원</span>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-prev" onclick="goToStep(1)">← 1단계 보기</button>
+      <button class="btn btn-next" onclick="completeAndNext(2)">2단계 완료 후 3단계로 이동 →</button>
+    </div>
+  </div>
+
+  <!-- ================= STEP 3 ================= -->
+  <div class="step-panel" id="panel3">
+    <div class="panel-header">
+      <span class="panel-step-badge">STEP 3</span>
+      <span class="panel-status">원화 정산 점검</span>
+    </div>
+    <div class="panel-title">원화 예수금 입금 및 정산 상태 확인</div>
+    <div class="panel-sub">환전된 원화가 내 카카오페이증권 계좌에 정상적으로 입금되었는지 확인합니다.</div>
+
+    <div class="path-box">
+      <div class="path-label">확인 경로</div>
+      <div class="path-flow">
+        <span class="node">카카오톡 알림톡 확인</span>
+        <span class="arrow">또는</span>
+        <span class="node">증권 내 계좌 홈</span>
+        <span class="arrow">→</span>
+        <span class="node kakao">원화 잔고 확인</span>
+      </div>
+    </div>
+
+    <div class="checklist">
+      <div class="check-card" onclick="onCardClick(this, event)">
+        <input type="checkbox">
+        <div class="check-content">
+          <span class="check-num">확인 1</span>
+          <div class="check-text">카카오톡 알림 또는 계좌 홈에서 <strong>원화 잔고(출금 가능 원화)</strong>에 환전 금액이 들어왔는지 확인합니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert-box alert-warn">
+      <strong>⚠️ 주의: 밤·주말·공휴일에 환전하셨나요?</strong><br>
+      시간외 환전은 스프레드를 먼저 적용해 입금한 뒤 <strong>다음 영업일 오전 09:30경</strong> 실시간 환율로 재정산해 차액을 돌려주거나 추가로 가져갑니다. 원화를 전액 빼려면 재정산이 끝난 뒤 이체해야 추가 징수분 때문에 잔고가 모자라지 않습니다.
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-prev" onclick="goToStep(2)">← 2단계로</button>
+      <button class="btn btn-next" onclick="completeAndNext(3)">3단계 완료 후 4단계(토스 이체)로 이동 →</button>
+    </div>
+  </div>
+
+  <!-- ================= STEP 4 ================= -->
+  <div class="step-panel" id="panel4">
+    <div class="panel-header">
+      <span class="panel-step-badge">STEP 4</span>
+      <span class="panel-status">최종 이체 단계</span>
+    </div>
+    <div class="panel-title">토스 계좌로 원화 송금(이체) 실행</div>
+    <div class="panel-sub">확정 입금된 원화를 수수료 없이 토스뱅크(또는 토스증권) 계좌로 옮깁니다.</div>
+
+    <div class="path-box">
+      <div class="path-label">카카오페이 앱 이동 경로</div>
+      <div class="path-flow">
+        <span class="node">내 계좌</span>
+        <span class="arrow">→</span>
+        <span class="node kakao">송금 (또는 출금)</span>
+        <span class="arrow">→</span>
+        <span class="node toss">토스뱅크 / 토스증권 선택</span>
+        <span class="arrow">→</span>
+        <span class="node kakao">보내기 완료</span>
+      </div>
+    </div>
+
+    <div class="checklist">
+      <div class="check-card" onclick="onCardClick(this, event)">
+        <input type="checkbox">
+        <div class="check-content">
+          <span class="check-num">순서 1</span>
+          <div class="check-text">카카오페이 증권 <strong>[내 계좌] → [송금] (또는 출금)</strong> 버튼을 터치합니다.</div>
+        </div>
+      </div>
+
+      <div class="check-card" onclick="onCardClick(this, event)">
+        <input type="checkbox">
+        <div class="check-content">
+          <span class="check-num">순서 2</span>
+          <div class="check-text">받는 은행을 <strong>토스뱅크</strong>(또는 토스증권 연계 계좌)로 선택하고 본인 계좌번호를 입력합니다.</div>
+        </div>
+      </div>
+
+      <div class="check-card" onclick="onCardClick(this, event)">
+        <input type="checkbox">
+        <div class="check-content">
+          <span class="check-num">순서 3</span>
+          <div class="check-text">환전된 원화 전액을 입력하고 <strong>[보내기]</strong>를 눌러 인증을 마치면 토스 계좌로 즉시 입금됩니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert-box alert-info">
+      <strong>💡 메뉴가 안 보이면:</strong><br>
+      앱 버전에 따라 [송금] 대신 [출금]·[이체]로 표시될 수 있습니다. 받는 계좌가 목록에 없으면 먼저 본인 명의 토스뱅크 계좌를 출금 계좌로 등록하세요. 토스 앱의 [채우기]로 카카오페이증권 계좌를 불러올 수 있는지는 앱에서 직접 확인이 필요합니다.
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-prev" onclick="goToStep(3)">← 3단계로</button>
+      <button class="btn btn-finish" onclick="completeAndNext(4)">✓ 전 과정 완료 체크</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
